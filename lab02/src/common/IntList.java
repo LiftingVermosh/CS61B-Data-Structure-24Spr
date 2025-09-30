@@ -11,7 +11,7 @@ public class IntList {
 
     /** Returns the ith item of this IntList. */
     public int get(int i) {
-        if (i == 0) {
+        if (i == 0) {0
             return first;
         }
         return rest.get(i - 1);

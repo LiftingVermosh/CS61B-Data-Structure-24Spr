@@ -77,9 +77,9 @@ public class SpeciesListStage implements AdventureStage {
                 user = Arrays.asList(input.toLowerCase().split(" *, *"));
             }
             double similarity = arraySimilarity(reference, user);
-            if (similarity != 1 && reference.size() != 0) {
-                long numCorrect = Math.round(similarity * reference.size());
-                System.out.println("Try again! You got " + numCorrect + " animals correct!");
+            if (similarity != 1 && !reference.isEmpty()) {
+                double numCorrect = Math.round(similarity * reference.size());
+                System.out.println("Try again! You got " + (long)numCorrect + " animals correct!");
                 continue;
             }
             break;
@@ -90,8 +90,9 @@ public class SpeciesListStage implements AdventureStage {
      * Computes the similarity of two lists. If there is similarity, return 1.
      * If there is no similarity, it should return 0.
      */
-    public static int arraySimilarity(List<String> listOne, List<String> listTwo) {
+    public static double arraySimilarity(List<String> listOne, List<String> listTwo) {
         List<String> copy = new ArrayList<>(listOne);
+        if(listOne.isEmpty()) return 0;
         int similarObjects = 0;
         for (String o : listTwo) {
             if (copy.contains(o)) {
@@ -99,6 +100,6 @@ public class SpeciesListStage implements AdventureStage {
                 copy.remove(o);
             }
         }
-        return similarObjects / listOne.size();
+        return similarObjects * 1.0 / listOne.size();
     }
 }
