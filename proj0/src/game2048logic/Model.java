@@ -5,6 +5,7 @@ import game2048rendering.Side;
 import game2048rendering.Tile;
 
 import java.util.Formatter;
+import java.util.HashSet;
 
 
 /** The state of a game of 2048.
@@ -15,6 +16,8 @@ public class Model {
     private final Board board;
     /** Current score. */
     private int score;
+    /** Current size **/
+    private int size;
 
     /* Coordinate System: column x, row y of the board (where x = 0,
      * y = 0 is the lower-left corner of the board) will correspond
@@ -29,6 +32,7 @@ public class Model {
     public Model(int size) {
         board = new Board(size);
         score = 0;
+        this.size = size;
     }
 
     /** A new 2048 game where RAWVALUES contain the values of the tiles
@@ -80,11 +84,25 @@ public class Model {
         return board;
     }
 
+    private void sizeCheck() {
+        if (this.size < 0) {
+            throw new IllegalArgumentException();
+        }
+    }
+
     /** Returns true if at least one space on the Board is empty.
      *  Empty spaces are stored as null.
      * */
     public boolean emptySpaceExists() {
-        // TODO: Task 2. Fill in this function.
+        sizeCheck();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Tile tile = board.tile(i, j);
+                if(tile == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -94,7 +112,19 @@ public class Model {
      * given a Tile object t, we get its value with t.value().
      */
     public boolean maxTileExists() {
-        // TODO: Task 3. Fill in this function.
+        sizeCheck();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Tile tile = board.tile(i, j);
+                if(tile == null) {
+                    continue;
+                }
+                int curValue =  tile.value();
+                if (curValue == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -105,8 +135,44 @@ public class Model {
      * 2. There are two adjacent tiles with the same value.
      */
     public boolean atLeastOneMoveExists() {
-        // TODO: Fill in this function.
-        return false;
+        sizeCheck();
+
+        int size = board.size();
+
+        // 检查是否有空白格子
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                if (board.tile(x, y) == null) {
+                    return true; // 存在空白格子，肯定可以移动
+                }
+            }
+        }
+
+        // 棋盘已满，检查是否有相邻的相同值可以合并
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                Tile currentTile = board.tile(x, y);
+                int currentValue = currentTile.value();
+
+                // 检查右边相邻格子
+                if (x + 1 < size) {
+                    Tile rightTile = board.tile(x + 1, y);
+                    if (rightTile.value() == currentValue) {
+                        return true; // 找到水平相邻的相同值
+                    }
+                }
+
+                // 检查上边相邻格子
+                if (y + 1 < size) {
+                    Tile upTile = board.tile(x, y + 1);
+                    if (upTile.value() == currentValue) {
+                        return true; // 找到垂直相邻的相同值
+                    }
+                }
+            }
+        }
+
+        return false; // 没有空白格子，也没有可合并的相邻相同值
     }
 
     /**
