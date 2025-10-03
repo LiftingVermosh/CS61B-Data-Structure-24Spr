@@ -5,7 +5,6 @@ import game2048rendering.Side;
 import game2048rendering.Tile;
 
 import java.util.Formatter;
-import java.util.HashSet;
 
 
 /** The state of a game of 2048.
@@ -17,7 +16,7 @@ public class Model {
     /** Current score. */
     private int score;
     /** Current size **/
-    private int size;
+    private final int size;
 
     /* Coordinate System: column x, row y of the board (where x = 0,
      * y = 0 is the lower-left corner of the board) will correspond
@@ -41,6 +40,7 @@ public class Model {
     public Model(int[][] rawValues, int score) {
         board = new Board(rawValues);
         this.score = score;
+        this.size = board.size();
     }
 
     /** Return the current Tile at (x, y), where 0 <= x < size(),
@@ -190,11 +190,34 @@ public class Model {
      *    and the trailing tile does not.
      */
     public void moveTileUpAsFarAsPossible(int x, int y) {
-        Tile currTile = board.tile(x, y);
-        int myValue = currTile.value();
-        int targetY = y;
-
-        // TODO: Tasks 5, 6, and 10. Fill in this function.
+        Tile curr = board.tile(x, y);
+        if (curr == null) return;
+        int destY = y;          // 最终要停下的位置
+        Tile target = null;     // 第一个碰到的非空 tile
+        // 从 y+1 开始往上扫，找到第一个非空格子或边界
+        for (int ny = y + 1; ny < board.size(); ny++) {
+            Tile t = board.tile(x, ny);
+            if (t != null) {
+                target = t;
+                destY = ny;
+                break;
+            }
+        }
+        if (target == null) {        // 上面全是空，直接顶到最上
+            destY = board.size() - 1;
+            if (destY != y) {
+                board.move(x, destY, curr);
+            }
+            return;
+        }
+        // 判断能否合并
+        if (!target.wasMerged() && target.value() == curr.value()) {
+            score += curr.value() * 2;
+            board.move(x, destY, curr);
+        } else {
+            // 不能合并，就停在它下面一格
+            board.move(x, destY - 1, curr);
+        }
     }
 
     /** Handles the movements of the tilt in column x of the board
@@ -203,11 +226,21 @@ public class Model {
      * so we are tilting the tiles in this column up.
      * */
     public void tiltColumn(int x) {
-        // TODO: Task 7. Fill in this function.
+
+        for(int i = board.size() - 1; i >= 0; --i) {
+            Tile tile = board.tile(x, i);
+            if(tile != null) {
+                moveTileUpAsFarAsPossible(x, i);
+            }
+        }
     }
 
     public void tilt(Side side) {
-        // TODO: Tasks 8 and 9. Fill in this function.
+        board.setViewingPerspective(side);
+        for(int i = board.size() - 1; i >= 0; --i) {
+            tiltColumn(i);
+        }
+        board.setViewingPerspective(Side.NORTH);
     }
 
     /** Tilts every column of the board toward SIDE.
