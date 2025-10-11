@@ -17,7 +17,7 @@ public class BSTMap<K, V> implements Map61B<K, V> {
             this.height = 1;
         }
 
-        // 安全的更新方法
+        // 更新
         void updateInfo(){
             int leftHeight = (left == null) ? 0 : left.height;
             int rightHeight = (right == null) ? 0 : right.height;
@@ -154,9 +154,7 @@ public class BSTMap<K, V> implements Map61B<K, V> {
             // removeMin中已经减少size，这里不需要再减
         }
 
-        if (node != null) {
-            node.updateInfo();
-        }
+        node.updateInfo();
         return node;
     }
 
@@ -175,9 +173,7 @@ public class BSTMap<K, V> implements Map61B<K, V> {
             return node.right;
         }
         node.left = removeMin(node.left);
-        if (node != null) {
-            node.updateInfo();
-        }
+        node.updateInfo();
         return node;
     }
 
