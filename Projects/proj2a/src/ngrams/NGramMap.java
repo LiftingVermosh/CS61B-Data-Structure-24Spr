@@ -1,9 +1,11 @@
 package ngrams;
 
-import java.util.Collection;
+import java.util.*;
 
 import static ngrams.TimeSeries.MAX_YEAR;
 import static ngrams.TimeSeries.MIN_YEAR;
+
+import edu.princeton.cs.algs4.In;
 
 /**
  * An object that provides utility methods for making queries on the
@@ -16,14 +18,75 @@ import static ngrams.TimeSeries.MIN_YEAR;
  * @author Josh Hug
  */
 public class NGramMap {
-
-    // TODO: Add any necessary static/instance variables.
+    // 每个词项的计数
+    private HashMap<String, TimeSeries> counts4EachToken;
+    // 每年所有词项的计数
+    private TreeMap<Integer, Long> counts4TokensYearly;
+    // 缓存计数的 TimesSeries 对象
+    private TimeSeries totalCountsTS;
 
     /**
-     * Constructs an NGramMap from WORDSFILENAME and COUNTSFILENAME.
+     * Constructs an NGramMap from WORDSFIL ENAME and COUNTSFILENAME.
      */
     public NGramMap(String wordsFilename, String countsFilename) {
-        // TODO: Fill in this constructor. See the "NGramMap Tips" section of the spec for help.
+        counts4EachToken = new HashMap<>();
+        counts4TokensYearly = new TreeMap<>();
+        totalCountsTS = new TimeSeries();
+        In in4words = new In(wordsFilename);
+        In in4counts = new In(countsFilename);
+
+        while(in4words.hasNextLine()) {
+            String curLine = in4words.readLine();
+            String [] data =  curLine.split("\t");
+
+            if (data.length != 4) {
+                throw new IllegalArgumentException("Wrong number of words in words file");
+            }
+
+            String word = data[0];
+            int year = Integer.parseInt(data[1]);
+            int count = Integer.parseInt(data[2]);
+
+            if (year < MIN_YEAR || year > MAX_YEAR) {
+                throw new IllegalArgumentException("Wrong year in words file");
+            }
+
+            if (!counts4EachToken.containsKey(word)) {
+                TimeSeries ts = new TimeSeries();
+                ts.put(year, count * 1.0);
+                counts4EachToken.put(word, ts);
+//                System.out.println("counts4EachToken has add a new K-V:("+word+","+count+")" );
+            } else {
+                counts4EachToken.get(word).put(year, count * 1.0);
+            }
+        }
+
+        while (in4counts.hasNextLine()) {
+            String curLine = in4counts.readLine();
+            String [] data =  curLine.split(",");
+            if (data.length != 4) {
+                throw new IllegalArgumentException("Wrong number of words in words file");
+            }
+
+            int year = Integer.parseInt(data[0]);
+            long count = Long.parseLong(data[1]);
+
+            if (year < MIN_YEAR || year > MAX_YEAR) {
+                throw new IllegalArgumentException("Wrong year in words file");
+            }
+
+            if (!counts4TokensYearly.containsKey(year)) {
+                counts4TokensYearly.put(year, (long)count);
+            } else {
+                counts4TokensYearly.put(year, counts4TokensYearly.get(year) + count);
+            }
+        }
+
+        for(Integer year: counts4TokensYearly.keySet()) {
+            double total = counts4TokensYearly.get(year).doubleValue();
+            totalCountsTS.put(year, total);
+        }
+
     }
 
     /**
@@ -34,8 +97,15 @@ public class NGramMap {
      * returns an empty TimeSeries.
      */
     public TimeSeries countHistory(String word, int startYear, int endYear) {
-        // TODO: Fill in this method.
-        return null;
+        if (startYear < MIN_YEAR || startYear > MAX_YEAR) {
+            throw new IllegalArgumentException("Wrong year in Arguments");
+        }
+
+        if (!counts4EachToken.containsKey(word)) {
+            return new TimeSeries();
+        } else {
+            return new TimeSeries(counts4EachToken.get(word), startYear, endYear);
+        }
     }
 
     /**
@@ -45,16 +115,14 @@ public class NGramMap {
      * is not in the data files, returns an empty TimeSeries.
      */
     public TimeSeries countHistory(String word) {
-        // TODO: Fill in this method.
-        return null;
+        return countHistory(word, MIN_YEAR, MAX_YEAR);
     }
 
     /**
      * Returns a defensive copy of the total number of words recorded per year in all volumes.
      */
     public TimeSeries totalCountHistory() {
-        // TODO: Fill in this method.
-        return null;
+        return new TimeSeries(totalCountsTS, MIN_YEAR, MAX_YEAR);
     }
 
     /**
@@ -64,7 +132,14 @@ public class NGramMap {
      */
     public TimeSeries weightHistory(String word, int startYear, int endYear) {
         // TODO: Fill in this method.
-        return null;
+        if (startYear < MIN_YEAR || startYear > MAX_YEAR) {
+            throw new IllegalArgumentException("Wrong year in Arguments");
+        }
+        TimeSeries ts = countHistory(word, startYear, endYear);
+        if (ts == null || ts.isEmpty()) {
+            return new TimeSeries();
+        }
+        return ts.dividedBy(totalCountHistory());
     }
 
     /**
@@ -73,8 +148,7 @@ public class NGramMap {
      * TimeSeries.
      */
     public TimeSeries weightHistory(String word) {
-        // TODO: Fill in this method.
-        return null;
+        return weightHistory(word, MIN_YEAR, MAX_YEAR);
     }
 
     /**
@@ -84,8 +158,12 @@ public class NGramMap {
      */
     public TimeSeries summedWeightHistory(Collection<String> words,
                                           int startYear, int endYear) {
-        // TODO: Fill in this method.
-        return null;
+        int n =  words.size();
+        TimeSeries ts = new TimeSeries();
+        for (String word : words) {
+            ts = ts.plus(weightHistory(word, startYear, endYear));
+        }
+        return ts;
     }
 
     /**
@@ -93,10 +171,6 @@ public class NGramMap {
      * exist in this time frame, ignore it rather than throwing an exception.
      */
     public TimeSeries summedWeightHistory(Collection<String> words) {
-        // TODO: Fill in this method.
-        return null;
+        return summedWeightHistory(words, MIN_YEAR, MAX_YEAR);
     }
-
-    // TODO: Add any private helper methods.
-    // TODO: Remove all TODO comments before submitting.
 }
